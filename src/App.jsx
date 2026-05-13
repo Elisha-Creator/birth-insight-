@@ -12,7 +12,6 @@ export default function App() {
   const [page, setPage] = useState('home')
   const [result, setResult] = useState(null)
   const [user, setUser] = useState(null)
-  const [showAuth, setShowAuth] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
 
   useEffect(() => {
@@ -32,21 +31,38 @@ export default function App() {
     </div>
   )
 
+  // 🔒 Auth gate — show login screen if not signed in
+  if (!user) return (
+    <div className="min-h-screen relative overflow-x-hidden">
+      <StarField />
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
+        <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }}
+          transition={{ duration:0.6 }} className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <p className="text-gold-500 text-3xl mb-3">✦</p>
+            <h1 className="font-serif text-4xl text-stone-100 mb-2">
+              Birth <span className="gold-text italic">Insight</span>
+            </h1>
+            <p className="text-stone-400 text-sm">
+              Sign in to discover your cosmic birth story.
+            </p>
+          </div>
+          <AuthModal inline onSuccess={(u) => setUser(u)} />
+        </motion.div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen relative overflow-x-hidden">
       <StarField />
       <Nav page={page} setPage={setPage} user={user}
-        onAuthClick={() => setShowAuth(true)}
         onSignOut={() => supabase.auth.signOut()} />
-
       <AnimatePresence mode="wait">
         {page === 'home' && (
           <motion.div key="home"
             initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
-            <InputPage
-              user={user}
-              onAuthRequired={() => setShowAuth(true)}
-              onResult={(data) => { setResult(data); setPage('result') }} />
+            <InputPage user={user} onResult={(data) => { setResult(data); setPage('result') }} />
           </motion.div>
         )}
         {page === 'result' && result && (
@@ -58,13 +74,9 @@ export default function App() {
         {page === 'vault' && (
           <motion.div key="vault"
             initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
-            <VaultPage user={user} onAuthRequired={() => setShowAuth(true)} />
+            <VaultPage user={user} />
           </motion.div>
         )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       </AnimatePresence>
     </div>
   )

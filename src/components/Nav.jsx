@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 
-export default function Nav({ page, setPage, user, onAuthClick, onSignOut }) {
+export default function Nav({ page, setPage, user, onSignOut }) {
   return (
     <nav className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-white/5">
       <button onClick={() => setPage('home')} className="flex items-center gap-2 group">
@@ -27,7 +27,7 @@ export default function Nav({ page, setPage, user, onAuthClick, onSignOut }) {
           ))}
         </div>
 
-        {user ? (
+        {user && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gold-500/10 border border-gold-500/20
               flex items-center justify-center text-gold-400 text-xs font-medium">
@@ -38,12 +38,6 @@ export default function Nav({ page, setPage, user, onAuthClick, onSignOut }) {
               Sign out
             </button>
           </div>
-        ) : (
-          <button onClick={onAuthClick}
-            className="text-sm bg-gold-500/10 border border-gold-500/20 text-gold-400
-            hover:bg-gold-500/20 transition-colors px-4 py-1.5 rounded-xl">
-            Sign in
-          </button>
         )}
       </div>
     </nav>
