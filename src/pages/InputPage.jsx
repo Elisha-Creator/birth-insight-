@@ -7,7 +7,7 @@ import {
 } from '../lib/zodiac'
 import toast from 'react-hot-toast'
 
-export default function InputPage({ onResult }) {
+export default function InputPage({ onResult, user, onAuthRequired }) {
   const [form, setForm] = useState({ name: '', dob: '', country: '' })
   const [loading, setLoading] = useState(false)
 
@@ -28,7 +28,6 @@ export default function InputPage({ onResult }) {
       const day = dobDate.getDate()
       const year = dobDate.getFullYear()
 
-      // All local calculations
       const western = getWesternZodiac(month, day)
       const chinese = getChineseZodiac(year)
       const element = getChineseElement(year)
@@ -37,23 +36,24 @@ export default function InputPage({ onResult }) {
       const age = getExactAge(form.dob)
       const dayOfWeek = getDayOfWeek(form.dob)
 
-      // AI insights from Supabase Edge Function
       let insights = null
       try {
         const { data, error } = await supabase.functions.invoke('get-insights', {
           body: { month, day, year, zodiac: western.name, chineseAnimal: chinese.animal }
         })
         if (!error) insights = data
-      } catch { /* insights stay null, we show fallback */ }
+      } catch { }
 
-      // Save to Supabase DB
-      await supabase.from('birth_records').insert({
-        name: form.name.trim(),
-        dob: form.dob,
-        country: form.country.trim() || null,
-        zodiac_sign: western.name,
-        chinese_zodiac: chinese.animal,
-      })
+      if (user) {
+        await supabase.from('birth_records').insert({
+          name: form.name.trim(),
+          dob: form.dob,
+          country: form.country.trim() || null,
+          zodiac_sign: western.name,
+          chinese_zodiac: chinese.animal,
+          user_id: user.id,
+        })
+      }
 
       onResult({ form, western, chinese, element, birthstone, flower, age, dayOfWeek, insights, month, day, year })
     } catch (err) {
@@ -69,7 +69,6 @@ export default function InputPage({ onResult }) {
       <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.6 }}
         className="w-full max-w-md">
 
-        {/* Hero text */}
         <div className="text-center mb-10">
           <p className="section-label mb-3">✦ cosmic archive ✦</p>
           <h1 className="text-4xl md:text-5xl mb-3">
@@ -79,9 +78,16 @@ export default function InputPage({ onResult }) {
             Enter your details to unlock historical events, zodiac insights,
             and a personalised cosmic profile.
           </p>
+          {!user && (
+            <p className="text-stone-500 text-xs mt-3">
+              <button onClick={onAuthRequired} className="text-gold-400 hover:text-gold-300 transition-colors">
+                Sign in
+              </button>
+              {' '}to save your readings to the vault.
+            </p>
+          )}
         </div>
 
-        {/* Form card */}
         <div className="glass-card p-6 md:p-8">
           <form onSubmit={submit} className="space-y-4">
             <div>
@@ -97,7 +103,9 @@ export default function InputPage({ onResult }) {
                 className="input-field [color-scheme:dark]" />
             </div>
             <div>
-              <label className="section-label block mb-2">Country / Location <span className="text-stone-600">(optional)</span></label>
+              <label className="section-label block mb-2">
+                Country / Location <span className="text-stone-600">(optional)</span>
+              </label>
               <input name="country" value={form.country} onChange={handle}
                 placeholder="e.g. Nigeria"
                 className="input-field" />

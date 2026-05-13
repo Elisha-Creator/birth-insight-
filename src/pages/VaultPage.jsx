@@ -3,12 +3,15 @@ import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 
-export default function VaultPage() {
+export default function VaultPage({ user, onAuthRequired }) {
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
-  useEffect(() => { fetchRecords() }, [])
+  useEffect(() => {
+    if (!user) { setLoading(false); return }
+    fetchRecords()
+  }, [user])
 
   async function fetchRecords() {
     setLoading(true)
@@ -40,12 +43,24 @@ export default function VaultPage() {
             <p className="section-label mb-1">✦ people vault</p>
             <h1 className="font-serif text-2xl text-stone-100">Saved Records</h1>
           </div>
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or country…"
-            className="input-field max-w-xs" />
+          {user && (
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name or country…"
+              className="input-field max-w-xs" />
+          )}
         </div>
 
-        {loading ? (
+        {!user ? (
+          <div className="text-center py-20 text-stone-500">
+            <p className="text-5xl mb-4">✦</p>
+            <p className="mb-4">Sign in to see your saved records.</p>
+            <button onClick={onAuthRequired}
+              className="text-sm bg-gold-500/10 border border-gold-500/20 text-gold-400
+              hover:bg-gold-500/20 transition-colors px-6 py-2 rounded-xl">
+              Sign in
+            </button>
+          </div>
+        ) : loading ? (
           <div className="text-center py-16">
             <div className="inline-block w-8 h-8 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
           </div>
